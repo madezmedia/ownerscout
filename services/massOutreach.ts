@@ -71,7 +71,7 @@ export async function massOutreachSonicBrands(
 
   const summary = {
     totalJingles: pipelines.length,
-    estimatedValue: pipelines.length * 500, // $500 per jingle average
+    estimatedValue: pipelines.length * 27, // $27 per jingle (no-brainer pricing)
     estimatedTime: pipelines.length * 30 // 30 seconds per package
   };
 
@@ -155,7 +155,7 @@ export function generateOutreachStats(restaurants: PlaceResult[]): {
   }).length;
   const highScore = restaurants.filter(r => (r.sonicBrand?.sonicBrandScore ?? 0) >= 60).length;
 
-  const potentialValue = lowScore * 500; // $500 per low-score restaurant
+  const potentialValue = lowScore * 27; // $27 per low-score restaurant (impulse-buy pricing)
 
   return {
     total: restaurants.length,

@@ -14,12 +14,27 @@ export const SonicBrandPipeline: React.FC<SonicBrandPipelineProps> = ({ restaura
   const [output, setOutput] = useState<SonicBrandOutput | null>(null);
   const [previewScript, setPreviewScript] = useState<string | null>(null);
   const [showPreview, setShowPreview] = useState(false);
+  const [pricing, setPricing] = useState<{ amount: number; label: string }>({
+    amount: 27,
+    label: 'Starter'
+  });
 
   const handleGenerate = async () => {
     setIsGenerating(true);
     try {
       const result = await generateSonicBrandPipeline(restaurant);
       setOutput(result);
+
+      // Set pricing based on sonic brand score
+      const score = restaurant.sonicBrand?.sonicBrandScore ?? 0;
+      if (score < 20) {
+        setPricing({ amount: 27, label: 'Starter' });
+      } else if (score < 40) {
+        setPricing({ amount: 47, label: '3 Jingles' });
+      } else {
+        setPricing({ amount: 97, label: 'Full Brand' });
+      }
+
       onComplete?.(result);
     } catch (error) {
       console.error('Pipeline generation error:', error);
@@ -41,8 +56,36 @@ export const SonicBrandPipeline: React.FC<SonicBrandPipelineProps> = ({ restaura
   const handleSendEmail = () => {
     if (!output) return;
 
-    const subject = encodeURIComponent(output.outreach.emailSubject);
-    const body = encodeURIComponent(output.outreach.emailBody);
+    const subject = encodeURIComponent(`$${pricing.amount} jingle for ${restaurant.name} 🎵`);
+    const body = encodeURIComponent(`Hi,
+
+I can create a custom jingle for ${restaurant.name} by tomorrow.
+
+$${pricing.amount}. Delivered in 24 hours.
+
+Here's what you get:
+✅ Custom 15-second jingle
+✅ AI-generated music (matches your vibe)
+✅ Professional voiceover
+✅ Commercial rights included
+✅ Money-back guarantee
+
+**Why $${pricing.amount}?**
+I'm building my portfolio with 100 Charlotte restaurants. You get a great deal, I get to show off my work.
+
+**Listen to your custom jingle:**
+${output.audio.jingleUrl}
+
+Want it? Just reply "YES" and it's yours by tomorrow.
+
+24-hour turnaround or your money back.
+
+Best,
+Michael Shaw
+UGCAudio | AI Sonic Branding for Charlotte
+
+P.S. I also help restaurants with better online ordering systems through Owner.com. If you're looking to upgrade yours, let me know!`);
+
     window.open(`mailto:?subject=${subject}&body=${body}`, '_blank');
   };
 

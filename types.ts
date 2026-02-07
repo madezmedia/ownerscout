@@ -52,6 +52,18 @@ export interface FitAnalysis {
   isIndependent: boolean;
 }
 
+export interface SonicBrandAnalysis {
+  hasAudio: boolean;
+  hasJingle: boolean;
+  hasPodcast: boolean;
+  socialMediaAudio: boolean;
+  youTubeChannel: boolean;
+  tiktokSound: boolean;
+  sonicBrandScore: number; // 0-100
+  opportunity: string;
+  detectedElements: string[];
+}
+
 export interface SearchFilters {
   includedTypes: string[];
   minRating: number;
@@ -79,6 +91,7 @@ export interface PlaceResult {
   // Enrichment fields
   techStack: TechStack;
   fit: FitAnalysis;
+  sonicBrand?: SonicBrandAnalysis; // NEW: Sonic brand analysis
 }
 
 export interface AggregateResponse {

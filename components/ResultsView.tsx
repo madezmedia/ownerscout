@@ -177,6 +177,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({ data, onFetchPlaces, isLoadin
                                         <tr>
                                             <th className="px-6 py-4 w-1/4">Restaurant</th>
                                             <th className="px-6 py-4">Fit Score</th>
+                                            <th className="px-6 py-4">Sonic Brand 🎵</th>
                                             <th className="px-6 py-4">Tech Stack Analysis</th>
                                             <th className="px-6 py-4">Stats</th>
                                             <th className="px-6 py-4 text-right">Action</th>
@@ -225,6 +226,23 @@ const ResultsView: React.FC<ResultsViewProps> = ({ data, onFetchPlaces, isLoadin
                                                                 </div>
                                                             </div>
                                                             <span className="text-[10px] text-slate-500 font-medium">{place.fit.reason}</span>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-4">
+                                                        <div className="flex flex-col gap-1">
+                                                            <div className="flex items-center gap-2">
+                                                                <span className={`text-sm font-bold ${place.sonicBrand?.sonicBrandScore && place.sonicBrand.sonicBrandScore >= 60 ? 'text-purple-600' : 'text-slate-400'}`}>
+                                                                    🎵 {place.sonicBrand?.sonicBrandScore ?? 0}
+                                                                </span>
+                                                            </div>
+                                                            <span className="text-[9px] text-slate-500 leading-tight">
+                                                                {place.sonicBrand?.opportunity ?? 'Analyze...'}
+                                                            </span>
+                                                            {place.sonicBrand && place.sonicBrand.sonicBrandScore < 50 && (
+                                                                <button className="text-[9px] text-purple-600 hover:text-purple-700 font-medium mt-1">
+                                                                    + Create Audio
+                                                                </button>
+                                                            )}
                                                         </div>
                                                     </td>
                                                     <td className="px-6 py-4">

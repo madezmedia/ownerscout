@@ -12,6 +12,7 @@ import {
 import { MOCK_ZIP_COORDS } from '../constants';
 import { detectTechStack } from './techDetector';
 import { detectChain } from './chainDetector';
+import { detectSonicBrand } from './sonicBrandDetector';
 
 // Detect if we're on Vercel or localhost
 const isProduction = import.meta.env.PROD || window.location.hostname !== 'localhost';
@@ -421,7 +422,40 @@ const executeAreaInsightsSearch = async (
     }
 
     const fit = calculateFitScore(p, tech, isIndie);
-    return { ...p, techStack: tech, fit };
+
+    // Detect sonic brand presence
+    let sonicBrand;
+    if (p.website) {
+      try {
+        sonicBrand = await detectSonicBrand(p.website, p.name);
+      } catch (error) {
+        sonicBrand = {
+          hasAudio: false,
+          hasJingle: false,
+          hasPodcast: false,
+          socialMediaAudio: false,
+          youTubeChannel: false,
+          tiktokSound: false,
+          sonicBrandScore: 0,
+          opportunity: "Unable to analyze",
+          detectedElements: []
+        };
+      }
+    } else {
+      sonicBrand = {
+        hasAudio: false,
+        hasJingle: false,
+        hasPodcast: false,
+        socialMediaAudio: false,
+        youTubeChannel: false,
+        tiktokSound: false,
+        sonicBrandScore: 0,
+        opportunity: "No website to analyze",
+        detectedElements: []
+      };
+    }
+
+    return { ...p, techStack: tech, fit, sonicBrand };
   }));
 
   const places = enrichedPlaces.filter(p => {
@@ -472,7 +506,9 @@ export const exportToCSV = (places: PlaceResult[]) => {
     'Delivery (3P)',
     'Reservations',
     'Loyalty/CRM',
-    'Tech Confidence'
+    'Tech Confidence',
+    'Sonic Brand Score',
+    'Sonic Brand Opportunity'
   ];
 
   const rows = places.map(p => [
@@ -493,7 +529,9 @@ export const exportToCSV = (places: PlaceResult[]) => {
     escapeField(p.techStack.delivery.join('; ')),
     escapeField(p.techStack.reservations.join('; ')),
     escapeField(p.techStack.loyaltyOrCRM.join('; ')),
-    escapeField(p.techStack.confidence)
+    escapeField(p.techStack.confidence),
+    escapeField(p.sonicBrand?.sonicBrandScore ?? 0),
+    escapeField(p.sonicBrand?.opportunity ?? 'Not analyzed')
   ]);
 
   const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');

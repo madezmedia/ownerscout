@@ -303,7 +303,7 @@ const executeAreaInsightsSearch = async (
     }
   };
 
-  const response = await fetch(`${PROXY_BASE}/places/computeInsights`, {
+  const response = await fetch(`${PROXY_BASE}/places-compute-insights`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

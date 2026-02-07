@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, MapPin, Filter, AlertCircle, Zap, ShieldCheck } from 'lucide-react';
+import { Search, MapPin, Filter, AlertCircle, Zap, ShieldCheck, X } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { PLACE_CATEGORIES, PRICE_LEVEL_LABELS } from '../constants';
 import { PriceLevel, SearchArea, SearchFilters, OperationalStatus } from '../types';
@@ -11,6 +11,7 @@ interface SearchPanelProps {
   setFilters: React.Dispatch<React.SetStateAction<SearchFilters>>;
   onSearch: () => void;
   isLoading: boolean;
+  onCloseMobile?: () => void;
 }
 
 const SearchPanel: React.FC<SearchPanelProps> = ({
@@ -19,7 +20,8 @@ const SearchPanel: React.FC<SearchPanelProps> = ({
   filters,
   setFilters,
   onSearch,
-  isLoading
+  isLoading,
+  onCloseMobile
 }) => {
 
   const toggleType = (typeId: string) => {
@@ -49,12 +51,23 @@ const SearchPanel: React.FC<SearchPanelProps> = ({
       transition={{ type: "spring", stiffness: 100, damping: 20 }}
       className="h-full flex flex-col glass-panel w-full md:w-96 shrink-0 overflow-y-auto z-10 shadow-xl"
     >
-      <div className="p-6 border-b border-white/20 bg-white/40 backdrop-blur-sm">
-        <h1 className="text-xl font-bold text-slate-800 flex items-center gap-2">
-          <Zap className="text-indigo-600 fill-indigo-600" />
-          OwnerScout
-        </h1>
-        <p className="text-xs text-slate-500 mt-1 uppercase tracking-wide font-medium">Restaurant Prospecting</p>
+      <div className="p-6 border-b border-white/20 bg-white/40 backdrop-blur-sm flex justify-between items-center">
+        <div>
+          <h1 className="text-xl font-bold text-slate-800 flex items-center gap-2">
+            <Zap className="text-indigo-600 fill-indigo-600" />
+            OwnerScout
+          </h1>
+          <p className="text-xs text-slate-500 mt-1 uppercase tracking-wide font-medium">Restaurant Prospecting</p>
+        </div>
+        {onCloseMobile && (
+          <button
+            onClick={onCloseMobile}
+            className="lg:hidden p-2 hover:bg-white/20 rounded-lg transition-colors"
+            aria-label="Close filters"
+          >
+            <X size={20} className="text-slate-600" />
+          </button>
+        )}
       </div>
 
       <div className="p-6 space-y-8 flex-1">

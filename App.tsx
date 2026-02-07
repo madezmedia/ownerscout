@@ -1,4 +1,5 @@
 import React, { useState, useCallback } from 'react';
+import { Filter } from 'lucide-react';
 import SearchPanel from './components/SearchPanel';
 import ResultsView from './components/ResultsView';
 import MapVisualization from './components/MapVisualization';
@@ -33,11 +34,16 @@ const App: React.FC = () => {
   // State for results
   const [isLoading, setIsLoading] = useState(false);
   const [results, setResults] = useState<AggregateResponse | null>(null);
+  const [showFilters, setShowFilters] = useState(true);
 
   // Handlers
   const handleInitialSearch = useCallback(async () => {
     setIsLoading(true);
     setResults(null);
+    // Auto-hide filters on mobile after search
+    if (window.innerWidth < 768) {
+      setShowFilters(false);
+    }
     try {
       // First call is typically just a COUNT to be cost-effective
       const data = await searchPlacesAggregate(area, filters, InsightType.COUNT);
@@ -66,15 +72,37 @@ const App: React.FC = () => {
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-slate-100 font-sans text-slate-900">
       
+      {/* Mobile Filter Toggle Button */}
+      <button
+        onClick={() => setShowFilters(!showFilters)}
+        className="lg:hidden fixed top-4 left-4 z-50 bg-indigo-600 text-white p-3 rounded-full shadow-lg hover:bg-indigo-700 transition-colors"
+        aria-label="Toggle filters"
+      >
+        <Filter size={20} />
+      </button>
+
       {/* Left Sidebar: Controls */}
-      <SearchPanel 
-        area={area} 
-        setArea={setArea}
-        filters={filters}
-        setFilters={setFilters}
-        onSearch={handleInitialSearch}
-        isLoading={isLoading}
-      />
+      {showFilters && (
+        <div className="fixed inset-y-0 left-0 z-40 lg:relative lg:z-10">
+          <SearchPanel 
+            area={area} 
+            setArea={setArea}
+            filters={filters}
+            setFilters={setFilters}
+            onSearch={handleInitialSearch}
+            isLoading={isLoading}
+            onCloseMobile={() => setShowFilters(false)}
+          />
+        </div>
+      )}
+
+      {/* Overlay for mobile when filters are open */}
+      {showFilters && (
+        <div 
+          className="lg:hidden fixed inset-0 bg-black/50 z-30"
+          onClick={() => setShowFilters(false)}
+        />
+      )}
 
       {/* Main Content Area */}
       <main className="flex-1 flex flex-col min-w-0">

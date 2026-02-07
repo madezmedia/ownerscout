@@ -13,7 +13,9 @@ import { MOCK_ZIP_COORDS } from '../constants';
 import { detectTechStack } from './techDetector';
 import { detectChain } from './chainDetector';
 
-const PROXY_BASE = 'http://localhost:3001/api';
+// Detect if we're on Vercel or localhost
+const isProduction = import.meta.env.PROD || window.location.hostname !== 'localhost';
+const PROXY_BASE = isProduction ? '/api' : 'http://localhost:3001/api';
 const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
 const AGENT_CONFIG = {

@@ -292,8 +292,9 @@ async function crawlWebsite(url: string): Promise<string | null> {
       url = 'https://' + url;
     }
 
-    // Use proxy to avoid CORS
-    const PROXY_BASE = 'http://localhost:3001/api';
+    // Detect if we're on Vercel or localhost
+    const isProduction = import.meta.env.PROD || window.location.hostname !== 'localhost';
+    const PROXY_BASE = isProduction ? '/api' : 'http://localhost:3001/api';
     const proxyUrl = `${PROXY_BASE}/proxy?url=${encodeURIComponent(url)}`;
 
     const response = await fetch(proxyUrl, {

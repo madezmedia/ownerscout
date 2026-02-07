@@ -3,6 +3,8 @@ import {
     BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell
 } from 'recharts';
 import { Download, Grid, Info, ChevronRight, ExternalLink, Smartphone, Globe, CreditCard } from 'lucide-react';
+import { SonicBrandPipeline } from './SonicBrandPipeline';
+import { MassOutreachButton } from './MassOutreachButton';
 import { AggregateResponse, InsightType, PlaceResult } from '../types';
 import { PRICE_LEVEL_LABELS } from '../constants';
 import { exportToCSV } from '../services/placesService';
@@ -93,12 +95,15 @@ const ResultsView: React.FC<ResultsViewProps> = ({ data, onFetchPlaces, isLoadin
 
                 <div className="flex gap-3">
                     {data.insightType === InsightType.PLACES && (
-                        <button
-                            onClick={() => data.places && exportToCSV(data.places)}
-                            className="flex items-center gap-2 px-4 py-2 bg-white/50 border border-white/40 text-slate-700 rounded-lg hover:bg-white/70 text-sm font-medium transition-colors backdrop-blur-sm shadow-sm"
-                        >
-                            <Download size={16} /> Export Leads
-                        </button>
+                        <>
+                            <MassOutreachButton restaurants={data.places} />
+                            <button
+                                onClick={() => data.places && exportToCSV(data.places)}
+                                className="flex items-center gap-2 px-4 py-2 bg-white/50 border border-white/40 text-slate-700 rounded-lg hover:bg-white/70 text-sm font-medium transition-colors backdrop-blur-sm shadow-sm"
+                            >
+                                <Download size={16} /> Export Leads
+                            </button>
+                        </>
                     )}
 
                     {data.insightType === InsightType.COUNT && data.totalCount > 0 && (
@@ -238,11 +243,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({ data, onFetchPlaces, isLoadin
                                                             <span className="text-[9px] text-slate-500 leading-tight">
                                                                 {place.sonicBrand?.opportunity ?? 'Analyze...'}
                                                             </span>
-                                                            {place.sonicBrand && place.sonicBrand.sonicBrandScore < 50 && (
-                                                                <button className="text-[9px] text-purple-600 hover:text-purple-700 font-medium mt-1">
-                                                                    + Create Audio
-                                                                </button>
-                                                            )}
+                                                            <SonicBrandPipeline restaurant={place} />
                                                         </div>
                                                     </td>
                                                     <td className="px-6 py-4">

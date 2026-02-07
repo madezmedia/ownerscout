@@ -8,13 +8,17 @@
     "dev:proxy": "node -r dotenv/config proxy-server.js dotenv_config_path=.env.local",
     "dev:all": "concurrently \"npm run dev:proxy\" \"npm run dev\"",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "generate:audio": "tsx scripts/generateSamples.ts",
+    "generate:jingle": "tsx scripts/generateAudio.ts"
   },
   "dependencies": {
+    "@ffmpeg-installer/ffmpeg": "^1.1.0",
     "clsx": "^2.1.1",
     "cors": "^2.8.5",
     "dotenv": "^16.6.1",
     "express": "^4.18.2",
+    "fluent-ffmpeg": "^2.1.2",
     "framer-motion": "^12.33.0",
     "lucide-react": "^0.563.0",
     "node-fetch": "^3.3.2",
@@ -24,9 +28,11 @@
     "tailwind-merge": "^3.4.0"
   },
   "devDependencies": {
+    "@types/fluent-ffmpeg": "^2.1.27",
     "@types/node": "^22.14.0",
     "@vitejs/plugin-react": "^5.0.0",
     "concurrently": "^8.2.2",
+    "tsx": "^4.19.2",
     "typescript": "~5.8.2",
     "vite": "^6.2.0"
   }

@@ -1,8 +1,9 @@
 import React, { useState, useCallback } from 'react';
-import { Filter } from 'lucide-react';
+import { Filter, Music } from 'lucide-react';
 import SearchPanel from './components/SearchPanel';
 import ResultsView from './components/ResultsView';
 import MapVisualization from './components/MapVisualization';
+import { SamplesPage } from './pages/SamplesPage';
 import { 
   SearchArea, 
   SearchFilters, 
@@ -35,6 +36,7 @@ const App: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [results, setResults] = useState<AggregateResponse | null>(null);
   const [showFilters, setShowFilters] = useState(true);
+  const [currentView, setCurrentView] = useState<'dashboard' | 'samples'>('dashboard');
 
   // Handlers
   const handleInitialSearch = useCallback(async () => {
@@ -71,15 +73,41 @@ const App: React.FC = () => {
 
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-slate-100 font-sans text-slate-900">
-      
-      {/* Mobile Filter Toggle Button */}
-      <button
-        onClick={() => setShowFilters(!showFilters)}
-        className="lg:hidden fixed top-4 left-4 z-50 bg-indigo-600 text-white p-3 rounded-full shadow-lg hover:bg-indigo-700 transition-colors"
-        aria-label="Toggle filters"
-      >
-        <Filter size={20} />
-      </button>
+
+      {/* Show Samples Page if selected */}
+      {currentView === 'samples' ? (
+        <div className="w-full h-full overflow-auto">
+          <div className="fixed top-4 left-4 z-50">
+            <button
+              onClick={() => setCurrentView('dashboard')}
+              className="bg-indigo-600 text-white px-4 py-2 rounded-lg shadow-lg hover:bg-indigo-700 transition-all flex items-center gap-2 font-medium"
+            >
+              ← Back to Dashboard
+            </button>
+          </div>
+          <SamplesPage />
+        </div>
+      ) : (
+        <>
+          {/* Navigation Header */}
+          <div className="fixed top-4 right-4 z-50 flex gap-2">
+            <button
+              onClick={() => setCurrentView('samples')}
+              className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-4 py-2 rounded-lg shadow-lg hover:shadow-xl transition-all flex items-center gap-2 font-medium"
+            >
+              <Music size={18} />
+              Listen to Samples
+            </button>
+          </div>
+
+          {/* Mobile Filter Toggle Button */}
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            className="lg:hidden fixed top-4 left-4 z-50 bg-indigo-600 text-white p-3 rounded-full shadow-lg hover:bg-indigo-700 transition-colors"
+            aria-label="Toggle filters"
+          >
+            <Filter size={20} />
+          </button>
 
       {/* Left Sidebar: Controls */}
       {showFilters && (
@@ -125,6 +153,8 @@ const App: React.FC = () => {
         </div>
       </main>
       
+        </>
+      )}
     </div>
   );
 };

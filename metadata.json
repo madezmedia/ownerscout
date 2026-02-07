@@ -1,0 +1,5 @@
+{
+  "name": "OwnerScout",
+  "description": "Restaurant prospecting tool for Owner.com. Find independent restaurants, analyze tech stacks, and identify high-fit leads.",
+  "requestFramePermissions": []
+}

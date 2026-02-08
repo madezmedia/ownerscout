@@ -3,6 +3,8 @@
  * Detects audio branding presence for restaurants
  */
 
+import { getCache, cacheKey } from './cacheService';
+
 export interface SonicBrandAnalysis {
   hasAudio: boolean;
   hasJingle: boolean;
@@ -22,6 +24,18 @@ export async function detectSonicBrand(
   website: string,
   name: string
 ): Promise<SonicBrandAnalysis> {
+
+  // Extract domain for cache key
+  const domain = extractDomain(website);
+  const cache = getCache();
+  const cacheKeyString = cacheKey('sonic', domain);
+
+  // Try cache first
+  const cached = await cache.get<SonicBrandAnalysis>(cacheKeyString);
+  if (cached) {
+    console.log(`✅ Cache hit for sonic brand: ${domain}`);
+    return cached;
+  }
 
   const detectedElements: string[] = [];
   let score = 0;
@@ -81,7 +95,7 @@ export async function detectSonicBrand(
   // Calculate opportunity message
   const opportunity = calculateOpportunity(score, detectedElements);
 
-  return {
+  const result = {
     hasAudio: score > 0,
     hasJingle: detectedElements.some(e => e.includes('Jingle')),
     hasPodcast: detectedElements.some(e => e.includes('Podcast')),
@@ -92,6 +106,27 @@ export async function detectSonicBrand(
     opportunity: opportunity,
     detectedElements: detectedElements
   };
+
+  // Cache for 7 days
+  await cache.set(cacheKeyString, result, 7 * 24 * 60 * 60);
+
+  return result;
+}
+
+/**
+ * Extract domain from URL for cache key
+ */
+function extractDomain(url: string): string {
+  try {
+    // Add protocol if missing
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      url = 'https://' + url;
+    }
+    const urlObj = new URL(url);
+    return urlObj.hostname;
+  } catch {
+    return url.toLowerCase().replace(/[^a-z0-9.-]/g, '');
+  }
 }
 
 /**

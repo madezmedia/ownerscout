@@ -13,6 +13,7 @@ import { MOCK_ZIP_COORDS } from '../constants';
 import { detectTechStack } from './techDetector';
 import { detectChain } from './chainDetector';
 import { detectSonicBrand } from './sonicBrandDetector';
+import { getCache, cacheKey } from './cacheService';
 
 // Detect if we're on Vercel or localhost
 const isProduction = import.meta.env.PROD || window.location.hostname !== 'localhost';
@@ -102,12 +103,25 @@ const getCoordinates = async (zipCode: string): Promise<{ lat: number; lng: numb
   if (MOCK_ZIP_COORDS[zipCode]) return MOCK_ZIP_COORDS[zipCode];
   if (!GOOGLE_MAPS_API_KEY) return MOCK_ZIP_COORDS['28202'];
 
+  const cache = getCache();
+  const cacheKeyString = cacheKey('geocode', zipCode);
+
+  // Try cache first
+  const cached = await cache.get<{ lat: number; lng: number }>(cacheKeyString);
+  if (cached) {
+    console.log(`✅ Cache hit for geocode: ${zipCode}`);
+    return cached;
+  }
+
   try {
     const res = await fetch(`${PROXY_BASE}/geocode?address=${encodeURIComponent(zipCode)}`);
     if (!res.ok) throw new Error(`Geocoding status: ${res.status}`);
     const data = await res.json();
     if (data.results?.[0]?.geometry?.location) {
-      return data.results[0].geometry.location;
+      const coords = data.results[0].geometry.location;
+      // Cache for 30 days
+      await cache.set(cacheKeyString, coords, 30 * 24 * 60 * 60);
+      return coords;
     }
   } catch (e) {
     console.warn("Geocoding error, using default center.", e);
@@ -117,6 +131,17 @@ const getCoordinates = async (zipCode: string): Promise<{ lat: number; lng: numb
 
 const fetchPlaceDetails = async (placeId: string): Promise<Omit<PlaceResult, 'techStack' | 'fit'> | null> => {
   if (!GOOGLE_MAPS_API_KEY) return null;
+
+  const cache = getCache();
+  const cacheKeyString = cacheKey('place', placeId);
+
+  // Try cache first
+  const cached = await cache.get<Omit<PlaceResult, 'techStack' | 'fit'>>(cacheKeyString);
+  if (cached) {
+    console.log(`✅ Cache hit for place: ${placeId}`);
+    return cached;
+  }
+
   try {
     const fieldMask = 'id,displayName,types,rating,userRatingCount,priceLevel,formattedAddress,location,websiteUri,nationalPhoneNumber,currentOpeningHours';
 
@@ -130,7 +155,7 @@ const fetchPlaceDetails = async (placeId: string): Promise<Omit<PlaceResult, 'te
     if (!res.ok) return null;
     const data = await res.json();
 
-    return {
+    const place = {
       placeId: data.id,
       name: data.displayName?.text || 'Unknown',
       types: data.types || [],
@@ -143,6 +168,11 @@ const fetchPlaceDetails = async (placeId: string): Promise<Omit<PlaceResult, 'te
       website: data.websiteUri,
       phone: data.nationalPhoneNumber
     };
+
+    // Cache for 7 days
+    await cache.set(cacheKeyString, place, 7 * 24 * 60 * 60);
+
+    return place;
   } catch (e) {
     console.error("Details fetch error", e);
     return null;

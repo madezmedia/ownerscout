@@ -3,6 +3,8 @@
  * Crawls restaurant websites to detect platforms, ordering systems, POS, delivery, and more
  */
 
+import { getCache, cacheKey } from './cacheService';
+
 export interface TechDetectionResult {
   websitePlatform: string;
   onlineOrdering: string[];
@@ -452,12 +454,24 @@ function calculateConfidence(detections: {
  * Main tech detection function
  */
 export async function detectTechStack(website: string): Promise<TechDetectionResult> {
+  // Extract domain for cache key
+  const domain = extractDomain(website);
+  const cache = getCache();
+  const cacheKeyString = cacheKey('tech', domain);
+
+  // Try cache first
+  const cached = await cache.get<TechDetectionResult>(cacheKeyString);
+  if (cached) {
+    console.log(`✅ Cache hit for tech stack: ${domain}`);
+    return cached;
+  }
+
   // Crawl the website
   const html = await crawlWebsite(website);
 
   if (!html) {
     // Return unknown/low confidence result
-    return {
+    const result = {
       websitePlatform: 'Unknown',
       onlineOrdering: [],
       reservations: [],
@@ -468,6 +482,9 @@ export async function detectTechStack(website: string): Promise<TechDetectionRes
       confidence: 10,
       hasFirstPartyOrdering: false
     };
+    // Still cache failures for a short time to avoid repeated failed crawls
+    await cache.set(cacheKeyString, result, 1 * 60 * 60); // 1 hour
+    return result;
   }
 
   // Detect all platforms
@@ -498,7 +515,7 @@ export async function detectTechStack(website: string): Promise<TechDetectionRes
     other: otherDetections
   });
 
-  return {
+  const result = {
     websitePlatform,
     onlineOrdering: orderingDetections,
     reservations: reservationDetections,
@@ -509,4 +526,25 @@ export async function detectTechStack(website: string): Promise<TechDetectionRes
     confidence,
     hasFirstPartyOrdering: hasFirstParty
   };
+
+  // Cache for 3 days
+  await cache.set(cacheKeyString, result, 3 * 24 * 60 * 60);
+
+  return result;
+}
+
+/**
+ * Extract domain from URL for cache key
+ */
+function extractDomain(url: string): string {
+  try {
+    // Add protocol if missing
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      url = 'https://' + url;
+    }
+    const urlObj = new URL(url);
+    return urlObj.hostname;
+  } catch {
+    return url.toLowerCase().replace(/[^a-z0-9.-]/g, '');
+  }
 }

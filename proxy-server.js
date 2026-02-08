@@ -14,7 +14,7 @@ app.use(cors({
 app.use(express.json());
 
 // Proxy endpoint for Places Aggregate API
-app.post('/api/places/computeInsights', async (req, res) => {
+app.post('/api/places-compute-insights', async (req, res) => {
     const apiKey = process.env.GOOGLE_MAPS_API_KEY;
 
     console.log('Received /api/places/computeInsights request');

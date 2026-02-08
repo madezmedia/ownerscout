@@ -10,7 +10,8 @@
     "build": "vite build",
     "preview": "vite preview",
     "generate:audio": "tsx scripts/generateSamples.ts",
-    "generate:jingle": "tsx scripts/generateAudio.ts"
+    "generate:jingle": "tsx scripts/generateAudio.ts",
+    "generate:voiceover": "tsx scripts/generateVoiceoverOnly.ts"
   },
   "dependencies": {
     "@ffmpeg-installer/ffmpeg": "^1.1.0",

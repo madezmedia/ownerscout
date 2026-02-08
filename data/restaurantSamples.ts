@@ -35,7 +35,7 @@ export const restaurantSamples: RestaurantSample[] = [
 "Amélie's French Bakery"
 
 [SOUND: Elegant 3-note musical flourish - la-la-la ♪]`,
-    audioUrl: "/samples/amelies-jingle.mp3", // TODO: Replace with real audio
+    audioUrl: "/samples/amelies.mp3", // ✅ Real audio - ElevenLabs voiceover
     pricing: 27,
     ownerComFit: 92
   },
@@ -55,7 +55,7 @@ export const restaurantSamples: RestaurantSample[] = [
 "Cuzzo's Cuisine II"
 
 [SOUND: Enthusiastic 4-note tag - DUN-dun-dun-DUN! ♪]`,
-    audioUrl: "/samples/cuzzos-jingle.mp3",
+    audioUrl: "/samples/cuzzos.mp3", // ✅ Real audio - ElevenLabs voiceover
     pricing: 27,
     ownerComFit: 88
   },
@@ -75,7 +75,7 @@ export const restaurantSamples: RestaurantSample[] = [
 "Midwood Smokehouse"
 
 [SOUND: Satisfying 3-note bass riff - BAM-bam-bum ♪]`,
-    audioUrl: "/samples/midwood-jingle.mp3",
+    audioUrl: "/samples/midwood.mp3", // ✅ Real audio - ElevenLabs voiceover
     pricing: 27,
     ownerComFit: 95
   },
@@ -95,7 +95,7 @@ export const restaurantSamples: RestaurantSample[] = [
 "Copper Thai"
 
 [SOUND: Beautiful 3-note Thai melody - din-din-don ♪]`,
-    audioUrl: "/samples/copper-jingle.mp3",
+    audioUrl: "/samples/copper.mp3", // ✅ Real audio - ElevenLabs voiceover
     pricing: 47,
     ownerComFit: 85
   },
@@ -115,7 +115,7 @@ export const restaurantSamples: RestaurantSample[] = [
 "The Goodyear House"
 
 [SOUND: Warm, communal 3-note rise - di-di-DUM ♪]`,
-    audioUrl: "/samples/goodyear-jingle.mp3",
+    audioUrl: "/samples/goodyear.mp3", // ✅ Real audio - ElevenLabs voiceover
     pricing: 27,
     ownerComFit: 90
   }

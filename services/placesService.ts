@@ -129,6 +129,54 @@ const getCoordinates = async (zipCode: string): Promise<{ lat: number; lng: numb
   return MOCK_ZIP_COORDS['28202'];
 };
 
+// Reverse geocode: Get ZIP code from coordinates
+export const getZipFromCoordinates = async (lat: number, lng: number): Promise<string> => {
+  if (!GOOGLE_MAPS_API_KEY) return '28202'; // Default fallback
+
+  const cache = getCache();
+  const cacheKeyString = cacheKey('reverse-geocode', `${lat.toFixed(4)},${lng.toFixed(4)}`);
+
+  // Try cache first
+  const cached = await cache.get<string>(cacheKeyString);
+  if (cached) {
+    console.log(`✅ Cache hit for reverse geocode: ${cached}`);
+    return cached;
+  }
+
+  try {
+    const res = await fetch(`${PROXY_BASE}/reverse-geocode?lat=${lat}&lng=${lng}`);
+    if (!res.ok) throw new Error(`Reverse geocoding status: ${res.status}`);
+    const data = await res.json();
+    
+    // Extract ZIP code from address components
+    if (data.results?.[0]?.addressComponents) {
+      const zipComponent = data.results[0].addressComponents.find(
+        (comp: any) => comp.types && comp.types.includes('postal_code')
+      );
+      if (zipComponent?.longText) {
+        const zipCode = zipComponent.longText;
+        // Cache for 30 days
+        await cache.set(cacheKeyString, zipCode, 30 * 24 * 60 * 60);
+        return zipCode;
+      }
+    }
+    
+    // Fallback: Try to find ZIP in formatted address
+    if (data.results?.[0]?.formattedAddress) {
+      const zipMatch = data.results[0].formattedAddress.match(/\b\d{5}(-\d{4})?\b/);
+      if (zipMatch) {
+        const zipCode = zipMatch[0];
+        await cache.set(cacheKeyString, zipCode, 30 * 24 * 60 * 60);
+        return zipCode;
+      }
+    }
+  } catch (e) {
+    console.warn("Reverse geocoding error, using default ZIP", e);
+  }
+  
+  return '28202'; // Fallback to Charlotte ZIP
+};
+
 const fetchPlaceDetails = async (placeId: string): Promise<Omit<PlaceResult, 'techStack' | 'fit'> | null> => {
   if (!GOOGLE_MAPS_API_KEY) return null;
 

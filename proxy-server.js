@@ -139,6 +139,34 @@ app.get('/api/geocode', async (req, res) => {
     }
 });
 
+// Proxy endpoint for Reverse Geocoding (coordinates → ZIP)
+app.get('/api/reverse-geocode', async (req, res) => {
+    const apiKey = process.env.GOOGLE_MAPS_API_KEY;
+    const { lat, lng } = req.query;
+
+    console.log('Reverse geocoding request received for coordinates:', lat, lng);
+
+    if (!apiKey) {
+        return res.status(500).json({ error: 'GOOGLE_MAPS_API_KEY not configured' });
+    }
+
+    if (!lat || !lng) {
+        return res.status(400).json({ error: 'Missing lat or lng parameter' });
+    }
+
+    try {
+        const response = await fetch(
+            `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${apiKey}`
+        );
+
+        const data = await response.json();
+        res.json(data);
+    } catch (error) {
+        console.error('Proxy error:', error);
+        res.status(500).json({ error: 'Proxy request failed' });
+    }
+});
+
 // Generic Proxy endpoint for crawling
 app.get('/api/proxy', async (req, res) => {
     const { url } = req.query;

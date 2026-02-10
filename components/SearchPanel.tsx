@@ -1,8 +1,9 @@
-import React from 'react';
-import { Search, MapPin, Filter, AlertCircle, Zap, ShieldCheck, X } from 'lucide-react';
+import React, { useState } from 'react';
+import { Search, MapPin, Filter, AlertCircle, Zap, ShieldCheck, X, Crosshair } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { PLACE_CATEGORIES, PRICE_LEVEL_LABELS } from '../constants';
 import { PriceLevel, SearchArea, SearchFilters, OperationalStatus } from '../types';
+import { getZipFromCoordinates } from '../services/placesService';
 
 interface SearchPanelProps {
   area: SearchArea;
@@ -23,6 +24,36 @@ const SearchPanel: React.FC<SearchPanelProps> = ({
   isLoading,
   onCloseMobile
 }) => {
+  const [isLoadingLocation, setIsLoadingLocation] = useState(false);
+
+  const handleUseMyLocation = async () => {
+    setIsLoadingLocation(true);
+    try {
+      if (!navigator.geolocation) {
+        alert('Geolocation is not supported by your browser');
+        return;
+      }
+
+      const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject, {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 0
+        });
+      });
+
+      const { latitude, longitude } = position.coords;
+      const zipCode = await getZipFromCoordinates(latitude, longitude);
+      
+      setArea({ ...area, zipCode });
+      console.log(`📍 Location detected: ${zipCode} (${latitude.toFixed(4)}, ${longitude.toFixed(4)})`);
+    } catch (error) {
+      console.error('Error getting location:', error);
+      alert('Unable to get your location. Please enter ZIP code manually.');
+    } finally {
+      setIsLoadingLocation(false);
+    }
+  };
 
   const toggleType = (typeId: string) => {
     setFilters(prev => {
@@ -79,13 +110,31 @@ const SearchPanel: React.FC<SearchPanelProps> = ({
 
           <div>
             <label className="block text-xs font-medium text-slate-700 mb-1">ZIP Code / City</label>
-            <input
-              type="text"
-              value={area.zipCode}
-              onChange={(e) => setArea({ ...area, zipCode: e.target.value })}
-              placeholder="e.g. 28202"
-              className="w-full rounded-md border border-white/30 bg-white/50 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 placeholder-slate-500 backdrop-blur-sm transition-colors"
-            />
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={area.zipCode}
+                onChange={(e) => setArea({ ...area, zipCode: e.target.value })}
+                placeholder="e.g. 28202"
+                className="flex-1 rounded-md border border-white/30 bg-white/50 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 placeholder-slate-500 backdrop-blur-sm transition-colors"
+              />
+              <button
+                onClick={handleUseMyLocation}
+                disabled={isLoadingLocation}
+                className="px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md border border-indigo-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                title="Use my current location"
+              >
+                {isLoadingLocation ? (
+                  <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                ) : (
+                  <Crosshair size={18} />
+                )}
+              </button>
+            </div>
+            <p className="text-[10px] text-slate-400 mt-1">📍 Click target icon to auto-detect your location</p>
           </div>
 
           <div>

@@ -193,12 +193,12 @@ const fetchPlaceDetails = async (placeId: string): Promise<Omit<PlaceResult, 'te
   try {
     const fieldMask = 'id,displayName,types,rating,userRatingCount,priceLevel,formattedAddress,location,websiteUri,nationalPhoneNumber,currentOpeningHours';
 
-    const res = await fetch(`${PROXY_BASE}/places/${placeId}`, {
+    const res = await fetchWithRetry(`${PROXY_BASE}/places/${placeId}`, {
       headers: {
         'Content-Type': 'application/json',
         'X-Goog-FieldMask': fieldMask
       }
-    });
+    }, 2, 500); // 2 retries, 500ms base delay for individual place details
 
     if (!res.ok) return null;
     const data = await res.json();
@@ -382,19 +382,19 @@ const executeAreaInsightsSearch = async (
     }
   };
 
-  const response = await fetch(`${PROXY_BASE}/places-compute-insights`, {
+  const response = await fetchWithRetry(`${PROXY_BASE}/places-compute-insights`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       'X-Goog-FieldMask': 'count,placeInsights'
     },
     body: JSON.stringify(body)
-  });
+  }, 3, 1000); // 3 retries, 1s base delay
 
   // Handle 429 RESOURCE_EXHAUSTED specifically
   if (response.status === 429) {
     const text = await response.text();
-    if ((text.includes('RESOURCE_EXHAUSTED') || text.includes('100 places')) && recurseDepth < 3) {
+    if ((text.includes('RESOURCE_EXHAUSTED') || text.includes('100 places')) && recurseDepth < 6) {
       console.log(`⚠️ Result count > 100, splitting rating range (${filters.minRating}-${filters.maxRating}) to fetch all results... (Depth: ${recurseDepth})`);
 
       const midRating = (filters.minRating + filters.maxRating) / 2;
@@ -563,6 +563,46 @@ const escapeField = (value: any): string => {
     return `"${stringValue.replace(/"/g, '""')}"`;
   }
   return stringValue;
+};
+
+// Exponential backoff fetch wrapper
+const fetchWithRetry = async (
+  url: string,
+  options: RequestInit,
+  retries = 3,
+  baseDelay = 1000
+): Promise<Response> => {
+  for (let i = 0; i < retries; i++) {
+    try {
+      const response = await fetch(url, options);
+
+      // If successful or not a rate limit error, return immediately
+      if (response.status !== 429) {
+        return response;
+      }
+
+      // If we've used all retries, throw
+      if (i === retries - 1) {
+        console.error(`❌ Max retries (${retries}) exceeded for 429 error`);
+        return response;
+      }
+
+      // Exponential backoff: 1s, 2s, 4s
+      const backoffMs = baseDelay * Math.pow(2, i);
+      console.log(`⚠️ Got 429 error, retrying in ${backoffMs}ms... (attempt ${i + 1}/${retries})`);
+      await new Promise(resolve => setTimeout(resolve, backoffMs));
+
+    } catch (error) {
+      // Network error, retry with backoff
+      if (i === retries - 1) throw error;
+
+      const backoffMs = baseDelay * Math.pow(2, i);
+      console.log(`⚠️ Network error, retrying in ${backoffMs}ms... (attempt ${i + 1}/${retries})`);
+      await new Promise(resolve => setTimeout(resolve, backoffMs));
+    }
+  }
+
+  throw new Error('Max retries exceeded');
 };
 
 export const exportToCSV = (places: PlaceResult[]) => {

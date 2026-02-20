@@ -114,7 +114,8 @@ const getCoordinates = async (zipCode: string): Promise<{ lat: number; lng: numb
   }
 
   try {
-    const res = await fetch(`${PROXY_BASE}/geocode?address=${encodeURIComponent(zipCode)}`);
+    const authHdr = _authToken ? { Authorization: `Bearer ${_authToken}` } : {};
+    const res = await fetch(`${PROXY_BASE}/geocode?address=${encodeURIComponent(zipCode)}`, { headers: authHdr as HeadersInit });
     if (!res.ok) throw new Error(`Geocoding status: ${res.status}`);
     const data = await res.json();
     if (data.results?.[0]?.geometry?.location) {
@@ -144,7 +145,8 @@ export const getZipFromCoordinates = async (lat: number, lng: number): Promise<s
   }
 
   try {
-    const res = await fetch(`${PROXY_BASE}/reverse-geocode?lat=${lat}&lng=${lng}`);
+    const authHdr = _authToken ? { Authorization: `Bearer ${_authToken}` } : {};
+    const res = await fetch(`${PROXY_BASE}/reverse-geocode?lat=${lat}&lng=${lng}`, { headers: authHdr as HeadersInit });
     if (!res.ok) throw new Error(`Reverse geocoding status: ${res.status}`);
     const data = await res.json();
     
@@ -192,11 +194,13 @@ const fetchPlaceDetails = async (placeId: string): Promise<Omit<PlaceResult, 'te
 
   try {
     const fieldMask = 'id,displayName,types,rating,userRatingCount,priceLevel,formattedAddress,location,websiteUri,nationalPhoneNumber,currentOpeningHours';
+    const authHdr = _authToken ? { Authorization: `Bearer ${_authToken}` } : {};
 
     const res = await fetchWithRetry(`${PROXY_BASE}/places/${placeId}`, {
       headers: {
         'Content-Type': 'application/json',
-        'X-Goog-FieldMask': fieldMask
+        'X-Goog-FieldMask': fieldMask,
+        ...authHdr
       }
     }, 2, 500); // 2 retries, 500ms base delay for individual place details
 
@@ -331,12 +335,20 @@ const mergeAggregateResponses = (r1: AggregateResponse, r2: AggregateResponse, i
   };
 };
 
+// Auth token store - set by App.tsx before making requests
+let _authToken: string | undefined;
+export const setAuthToken = (token: string | undefined) => { _authToken = token; };
+export const getStoredAuthToken = () => _authToken;
+
 // Main function now just delegates to the recursive helper
 export const searchPlacesAggregate = async (
   area: SearchArea,
   filters: SearchFilters,
-  insightType: InsightType
+  insightType: InsightType,
+  authToken?: string
 ): Promise<AggregateResponse> => {
+
+  if (authToken) _authToken = authToken;
 
   if (!GOOGLE_MAPS_API_KEY) {
     console.warn("No GOOGLE_MAPS_API_KEY found. Agent switching to Simulation Mode.");
@@ -382,13 +394,27 @@ const executeAreaInsightsSearch = async (
     }
   };
 
+  // Attach _meta so the backend can build the DB cache key
+  const bodyWithMeta = {
+    ...body,
+    _meta: {
+      zipCode: area.zipCode,
+      radiusKm: area.radiusKm,
+      filters,
+      insightType
+    }
+  };
+
+  const authHeaders: Record<string, string> = _authToken ? { Authorization: `Bearer ${_authToken}` } : {};
+
   const response = await fetchWithRetry(`${PROXY_BASE}/places-compute-insights`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'X-Goog-FieldMask': 'count,placeInsights'
+      'X-Goog-FieldMask': 'count,placeInsights',
+      ...authHeaders
     },
-    body: JSON.stringify(body)
+    body: JSON.stringify(bodyWithMeta)
   }, 3, 1000); // 3 retries, 1s base delay
 
   // Handle 429 RESOURCE_EXHAUSTED specifically

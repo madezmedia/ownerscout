@@ -14,7 +14,10 @@
     "generate:voiceover": "tsx scripts/generateVoiceoverOnly.ts"
   },
   "dependencies": {
+    "@clerk/backend": "^2.31.2",
+    "@clerk/clerk-react": "^5.61.0",
     "@ffmpeg-installer/ffmpeg": "^1.1.0",
+    "@supabase/supabase-js": "^2.97.0",
     "clsx": "^2.1.1",
     "cors": "^2.8.5",
     "dotenv": "^16.6.1",
